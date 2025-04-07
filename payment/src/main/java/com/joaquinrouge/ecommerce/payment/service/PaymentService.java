@@ -9,6 +9,9 @@ import com.joaquinrouge.ecommerce.payment.model.Payment;
 import com.joaquinrouge.ecommerce.payment.model.PaymentStatus;
 import com.joaquinrouge.ecommerce.payment.repository.IPaymentRepository;
 
+import feign.FeignException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 @Service
 public class PaymentService implements IPaymentService {
 
@@ -19,26 +22,32 @@ public class PaymentService implements IPaymentService {
 	private IOrderClient orderClient;
 	
 	@Override
+	@CircuitBreaker(name = "order-service",fallbackMethod = "orderServiceFallback")
 	public Payment pay(Long orderId) {
 	
         paymentRepository.findByOrderId(orderId).ifPresent(p -> {
-            throw new IllegalStateException("Este pedido ya fue pagado.");
+            throw new IllegalStateException("This order was already paid.");
         });
 		
-        OrderDto order = orderClient.getOrder(orderId);
-
-        if (order == null) {
-            throw new IllegalArgumentException("Pedido no encontrado.");
+        try {
+        	OrderDto order = orderClient.getOrder(orderId);
+        	
+        	PaymentStatus status = Math.random() > 0.2 ? PaymentStatus.COMPLETED : PaymentStatus.FAILED;
+        	 
+        	Payment payment = new Payment();
+        	payment.setOrderId(orderId);
+        	payment.setAmount(order.getTotal());
+        	payment.setStatus(status);
+        	return paymentRepository.save(payment);        	        	
+        }catch(FeignException e) {
+        	throw new IllegalArgumentException("Order not found");
         }
-        
-        PaymentStatus status = Math.random() > 0.2 ? PaymentStatus.COMPLETED : PaymentStatus.FAILED;
 
-        Payment payment = new Payment();
-        payment.setOrderId(orderId);
-        payment.setAmount(order.getTotal());
-        payment.setStatus(status);
-
-        return paymentRepository.save(payment);
+	}
+	
+	public Payment orderServiceFallback(Long orderId, Throwable t) {
+		System.out.println("Order fallback activated: " + t.getClass() + " - " + t.getMessage());
+		return new Payment(orderId,-1L,PaymentStatus.FAILED,-1);
 	}
 
 }

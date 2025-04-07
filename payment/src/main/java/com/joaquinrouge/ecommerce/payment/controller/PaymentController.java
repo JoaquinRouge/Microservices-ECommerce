@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.joaquinrouge.ecommerce.payment.model.Payment;
 import com.joaquinrouge.ecommerce.payment.service.PaymentService;
 
+import feign.FeignException;
+
 @RestController
 @RequestMapping("/payment")
 public class PaymentController {

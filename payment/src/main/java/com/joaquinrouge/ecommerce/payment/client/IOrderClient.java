@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import com.joaquinrouge.ecommerce.payment.dto.OrderDto;
 
-@FeignClient(name = "ORDER-SERVICE",url = "http://localhost:9000")
+@FeignClient(name = "ORDER-SERVICE")
 public interface IOrderClient {
     @GetMapping("/order/{id}")
     OrderDto getOrder(@PathVariable("id") Long orderId);
