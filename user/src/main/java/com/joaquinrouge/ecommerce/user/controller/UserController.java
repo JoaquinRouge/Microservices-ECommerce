@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.joaquinrouge.ecommerce.user.dto.CreateUserDto;
+import com.joaquinrouge.ecommerce.user.dto.LoginDto;
+import com.joaquinrouge.ecommerce.user.dto.UserDto;
 import com.joaquinrouge.ecommerce.user.model.User;
 import com.joaquinrouge.ecommerce.user.service.IUserService;
 
@@ -38,11 +41,23 @@ public class UserController {
 	}
 	
 	@PostMapping("/create")
-	public ResponseEntity<Object> createUser(@RequestBody User user){
+	public ResponseEntity<Object> createUser(@RequestBody CreateUserDto user){
 		try {
 			User createUser = userService.createUser(user);
 			return ResponseEntity.status(HttpStatus.CREATED).body(createUser);
 		}catch(IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
+	}
+	
+	@PostMapping("/login")
+	public ResponseEntity<Object> login(@RequestBody LoginDto loginDto){
+		try {
+			UserDto userDto = userService.login(loginDto.getEmail(),loginDto.getPassword());
+			return ResponseEntity.status(HttpStatus.OK).body(userDto);
+		}catch(IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}catch(RuntimeException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 	}
@@ -65,6 +80,12 @@ public class UserController {
 		}catch(IllegalArgumentException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
+	}
+	
+	@PutMapping("/admin/{id}")
+	public ResponseEntity<Object> giveAdmin(@PathVariable Long id){
+		userService.giveAdmin(id);
+		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 	
 }

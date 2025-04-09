@@ -20,34 +20,33 @@ public class PaymentService implements IPaymentService {
 	
 	@Autowired
 	private IOrderClient orderClient;
-	
 	@Override
-	@CircuitBreaker(name = "order-service",fallbackMethod = "orderServiceFallback")
 	public Payment pay(Long orderId) {
-	
-        paymentRepository.findByOrderId(orderId).ifPresent(p -> {
-            throw new IllegalStateException("This order was already paid.");
-        });
-		
-        try {
-        	OrderDto order = orderClient.getOrder(orderId);
-        	
-        	PaymentStatus status = Math.random() > 0.2 ? PaymentStatus.COMPLETED : PaymentStatus.FAILED;
-        	 
-        	Payment payment = new Payment();
-        	payment.setOrderId(orderId);
-        	payment.setAmount(order.getTotal());
-        	payment.setStatus(status);
-        	return paymentRepository.save(payment);        	        	
-        }catch(FeignException e) {
-        	throw new IllegalArgumentException("Order not found");
-        }
+	    paymentRepository.findByOrderId(orderId).ifPresent(p -> {
+	        throw new IllegalStateException("This order was already paid.");
+	    });
 
+	    return processPayment(orderId);
 	}
-	
+
+	@CircuitBreaker(name = "order-service", fallbackMethod = "orderServiceFallback")
+	private Payment processPayment(Long orderId) {
+	    try {
+	        OrderDto order = orderClient.getOrder(orderId);
+	        PaymentStatus status = Math.random() > 0.2 ? PaymentStatus.COMPLETED : PaymentStatus.FAILED;
+	        Payment payment = new Payment();
+	        payment.setOrderId(orderId);
+	        payment.setAmount(order.getTotal());
+	        payment.setStatus(status);
+	        return paymentRepository.save(payment);
+	    } catch (FeignException e) {
+	        throw new IllegalArgumentException("Order not found");
+	    }
+	}
+
 	public Payment orderServiceFallback(Long orderId, Throwable t) {
-		System.out.println("Order fallback activated: " + t.getClass() + " - " + t.getMessage());
-		return new Payment(orderId,-1L,PaymentStatus.FAILED,-1);
+	    System.out.println("Order fallback activated: " + t.getClass() + " - " + t.getMessage());
+	    return new Payment(orderId, -1L, PaymentStatus.FAILED, -1);
 	}
 
 }

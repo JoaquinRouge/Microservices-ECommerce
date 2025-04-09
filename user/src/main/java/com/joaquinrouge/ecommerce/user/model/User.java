@@ -2,6 +2,7 @@ package com.joaquinrouge.ecommerce.user.model;
 
 import com.joaquinrouge.ecommerce.user.enums.Role;
 
+import io.github.resilience4j.core.lang.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,13 +35,11 @@ public class User {
 		
 	}
 
-	public User(Long id,String email, String username, String password) {
+	public User(String email, String username, String password) {
 		super();
-		this.id = id;
 		this.email = email;
 		this.username = username;
 		this.password = password;
-		this.role = Role.CUSTOMER;
 	}
 
 	public Long getId() {

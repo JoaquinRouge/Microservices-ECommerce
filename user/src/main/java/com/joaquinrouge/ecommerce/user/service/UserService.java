@@ -7,6 +7,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.joaquinrouge.ecommerce.user.model.User;
+import com.joaquinrouge.ecommerce.user.dto.CreateUserDto;
+import com.joaquinrouge.ecommerce.user.dto.UserDto;
+import com.joaquinrouge.ecommerce.user.enums.Role;
 import com.joaquinrouge.ecommerce.user.repository.IUserRepository;
 
 @Service
@@ -30,7 +33,14 @@ public class UserService implements IUserService{
 	}
 
 	@Override
-	public User createUser(User user) {
+	public User getUserByEmail(String email) {
+		return userRepo.findByEmail(email)
+				.orElseThrow(()-> new IllegalArgumentException(
+						"User with email: "+ email + " not found"));
+	}
+	
+	@Override
+	public User createUser(CreateUserDto user) {
 		
 		if(userRepo.existsByEmail(user.getEmail())) {
 			throw new IllegalArgumentException("Email is already in use");
@@ -41,9 +51,11 @@ public class UserService implements IUserService{
 		}
 		
 		String hashedPassword = passwordEncoder.encode(user.getPassword());
-		user.setPassword(hashedPassword);
+		User newUser = new User(user.getEmail(),user.getUsername(),hashedPassword);
 		
-		return userRepo.save(user);
+		newUser.setRole(Role.CUSTOMER);
+
+		return userRepo.save(newUser);
 	}
 
 	@Override
@@ -75,6 +87,30 @@ public class UserService implements IUserService{
 		userFromDb.setPassword(passwordEncoder.encode(user.getPassword()));
 		
 		return userRepo.save(userFromDb);
+	}
+
+	@Override
+	public UserDto login(String email, String password) {
+		
+		User userFromDB = this.getUserByEmail(email);
+		
+		if(!passwordEncoder.matches(password,userFromDB.getPassword())) {
+			
+			throw new RuntimeException("Invalid credentials");
+			
+		}
+		
+		return new UserDto(userFromDB.getEmail(),userFromDB.getUsername(),userFromDB.getRole());
+	}
+
+	@Override
+	public void giveAdmin(Long id) {
+		User user = this.getUserById(id);
+		
+		user.setRole(Role.ADMIN);
+		
+		userRepo.save(user);
+		
 	}
 
 }
