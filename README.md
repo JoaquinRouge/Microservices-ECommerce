@@ -4,18 +4,6 @@ Este proyecto consiste en el backend de una aplicación E-Commerce construida ba
 
 ---
 
-## 📌 Tabla de Contenidos
-
-- [Descripción](#descripción)
-- [Tecnologías utilizadas](#tecnologías-utilizadas)
-- [Características principales](#características-principales)
-- [Endpoints](#endpoints)
-- [Instalación y ejecución](#instalación-y-ejecución)
-- [Autor](#autor)
-- [Licencia](#licencia)
-
----
-
 ## 📖 Descripción
 
 Este backend permite:
